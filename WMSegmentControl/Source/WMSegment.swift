@@ -10,7 +10,7 @@ import UIKit
 @IBDesignable
 open class WMSegment: UIControl {
     public var onValueChanged: ((_ index: Int)->())?
-    var buttons = [UIButton]()
+  open  var buttons = [UIButton]()
     var selector: UIView!
     public var selectedSegmentIndex: Int = 0
     
@@ -59,9 +59,6 @@ open class WMSegment: UIControl {
             updateView()
         }
     }
-    
-    @IBInspectable
-    public var buttonImagesSelected: String = ""
     
     @IBInspectable
     public var textColor: UIColor = .lightGray {
@@ -146,6 +143,7 @@ open class WMSegment: UIControl {
         sv.axis = .horizontal
         sv.alignment = .fill
         sv.distribution = .fillEqually//.fillProportionally
+        sv.spacing = 20
         addSubview(sv)
         sv.translatesAutoresizingMaskIntoConstraints = false
         
@@ -155,7 +153,7 @@ open class WMSegment: UIControl {
         sv.rightAnchor.constraint(equalTo: self.rightAnchor).isActive = true
     }
     
-    func setupSelector() {
+  open  func setupSelector() {
         
         let titles = buttonTitles.components(separatedBy: ",")
         let images = buttonImages.components(separatedBy: ",")
@@ -166,15 +164,19 @@ open class WMSegment: UIControl {
         
         
         if selectorType == .normal {
-            selector = UIView(frame: CGRect(x: 0, y: 0, width: selectorWidth, height: frame.height))
+            selector = UIView(frame: CGRect(x: 0, y: 10, width: selectorWidth, height: frame.height))
             if isRounded {
                 selector.layer.cornerRadius = frame.height / 2
             } else {
                 selector.layer.cornerRadius = 0
             }
         } else if selectorType == .bottomBar {
-            selector = UIView(frame: CGRect(x: 0, y: frame.height - bottomBarHeight, width: selectorWidth, height: bottomBarHeight))
-            selector.layer.cornerRadius = 0
+            
+            let currentSelectedBtn = self.buttons[0]
+            let startPosition = currentSelectedBtn.frame.origin.x
+            let selectorNewWidth = self.bounds.width/2
+//            selector = UIView(frame: CGRect(x: startPosition, y: frame.height - bottomBarHeight, width: selectorNewWidth, height: bottomBarHeight))
+//            selector.layer.cornerRadius = 0
         }
         
         selector.backgroundColor = selectorColor
@@ -245,31 +247,24 @@ open class WMSegment: UIControl {
     }
     
     @objc func buttonTapped(_ sender: UIButton) {
-        let images = self.buttonImages.components(separatedBy: ",")
-        let imagesSelected = self.buttonImagesSelected.components(separatedBy: ",")
-
+        
         for (buttonIndex, btn) in buttons.enumerated() {
             btn.tintColor = textColor
             btn.setTitleColor(textColor, for: .normal)
             btn.titleLabel?.font = normalFont
-            
-            if let image = images[safe: buttonIndex] {
-                btn.setImage(UIImage(named: image), for: .normal)
-            }
-            
             if btn == sender {
-                if let imageSelected = imagesSelected[safe: buttonIndex], !imageSelected.isEmpty {
-                    btn.setImage(UIImage(named: imageSelected), for: .normal)
-                }
                 selectedSegmentIndex = buttonIndex
-                let startPosition = frame.width/CGFloat(buttons.count) * CGFloat(buttonIndex)
-                if self.animate {
-                    UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut, animations: {
-                        self.selector.frame.origin.x = startPosition
-                    }, completion: nil)
-                }else{
-                    self.selector.frame.origin.x = startPosition
-                }
+                let currentSelectedBtn = self.buttons[self.selectedSegmentIndex]
+                let startPosition = currentSelectedBtn.frame.origin.x
+                let selectorNewWidth = currentSelectedBtn.titleLabel?.frame.size.width ?? 20
+//                if self.animate {
+//                    UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut, animations: {
+//                        self.selector.frame.size.width = self.bounds.width/2
+//                        self.selector.center = CGPoint(x: currentSelectedBtn.center.x, y: self.selector.center.y)
+//                    }, completion: nil)
+//                }else{
+//                    self.selector.frame.origin.x = self.buttons[self.selectedSegmentIndex].titleLabel?.frame.size.width ?? 20
+//                }
                 btn.titleLabel?.font = SelectedFont
                 btn.tintColor = selectorTextColor
                 btn.setTitleColor(selectorTextColor, for: .normal)
@@ -278,31 +273,40 @@ open class WMSegment: UIControl {
         onValueChanged?(selectedSegmentIndex)
         sendActions(for: .valueChanged)
     }
+    open func updateBottomBar(theIndex: Int){
+      
+        self.selector.frame.origin.x = self.buttons[theIndex].frame.size.width ?? 20
+    }
+    
+    open func createBottomBar(theIndex: Int){
+//        let currentSelectedBtn = self.buttons[theIndex]
+//        let startPosition = currentSelectedBtn.frame.origin.x
+        let selectorNewWidth = self.bounds.width/2
+        selector = UIView(frame: CGRect(x: 0, y: frame.height - bottomBarHeight, width: selectorNewWidth, height: bottomBarHeight))
+        selector.layer.cornerRadius = 0
+        
+        
+    }
+    
     //MARK: set Selected Index
     open func setSelectedIndex(_ index: Int) {
-        let images = self.buttonImages.components(separatedBy: ",")
-        let imagesSelected = self.buttonImagesSelected.components(separatedBy: ",")
-        
         for (buttonIndex, btn) in buttons.enumerated() {
             btn.tintColor = textColor
             btn.setTitleColor(textColor, for: .normal)
-            if let image = images[safe: buttonIndex] {
-                btn.setImage(UIImage(named: image), for: .normal)
-            }
             
             if btn.tag == index {
-                if let imageSelected = imagesSelected[safe: buttonIndex], !imageSelected.isEmpty {
-                    btn.setImage(UIImage(named: imageSelected), for: .normal)
-                }
                 selectedSegmentIndex = buttonIndex
-                let startPosition = frame.width/CGFloat(buttons.count) * CGFloat(buttonIndex)
-                if self.animate {
-                    UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut, animations: {
-                        self.selector.frame.origin.x = startPosition
-                    }, completion: nil)
-                }else{
-                    self.selector.frame.origin.x = startPosition
-                }
+                let currentSelectedBtn = self.buttons[self.selectedSegmentIndex]
+                let startPosition = currentSelectedBtn.frame.origin.x
+                let selectorNewWidth = currentSelectedBtn.titleLabel?.frame.size.width ?? 20
+////                if self.animate {
+////                    UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut, animations: {
+//                        self.selector.frame.size.width = self.bounds.width/2
+////                        self.selector.center = CGPoint(x: currentSelectedBtn.center.x, y: self.selector.center.y)
+////                    }, completion: nil)
+////                }else{
+//                    self.selector.frame.origin.x = startPosition
+////                }
                 
                 btn.tintColor = selectorTextColor
                 btn.setTitleColor(selectorTextColor, for: .normal)
@@ -330,13 +334,6 @@ extension UIButton {
         self.imageEdgeInsets = UIEdgeInsets(top: -(titleSize.height + gap) * sign, left: 0, bottom: 0, right: -titleSize.width)
     }
 }
-
-extension Array {
-    public subscript (safe index: Index) -> Element? {
-        return indices.contains(index) ? self[index] : nil
-    }
-}
-
 //MARK: Enums
 public enum SegementType: Int {
     case normal = 0, imageOnTop, onlyImage
